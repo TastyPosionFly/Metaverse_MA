@@ -1,5 +1,6 @@
 package PThread;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,6 +11,7 @@ public class FindMostNumberPThread implements Runnable{
     private int startIndex;
     private int endIndex;
     private Map<String, AtomicInteger> combinationCount;
+    private static final int NUM_LOCKS = Runtime.getRuntime().availableProcessors();
 
     public FindMostNumberPThread(int[] inputArray,int startIndex,int endIndex,Map<String,AtomicInteger> combinationCount){
         this.inputArray = inputArray;
@@ -27,6 +29,11 @@ public class FindMostNumberPThread implements Runnable{
                 stringBuilder.append(inputArray[j]);
                 String combinationStr = stringBuilder.toString();
 
+                //对不同顺序的数字组合，排放成一致的数字顺序
+                char[] chars = combinationStr.toCharArray();
+                Arrays.sort(chars);
+                combinationStr = new String(chars);
+
                 /*
                 combinationCount.computeIfAbsent(combinationStr, k -> new AtomicInteger()).incrementAndGet(); 这行代码使用了Java 8中的 computeIfAbsent 方法，它的作用如下：
 
@@ -39,7 +46,10 @@ public class FindMostNumberPThread implements Runnable{
                 如果 combinationStr 在 combinationCount 映射中已存在，就获取该键对应的 AtomicInteger 对象，并增加其值（即增加数字组合的出现次数）。
                 如果 combinationStr 在 combinationCount 映射中不存在，就创建一个新的 AtomicInteger 对象并将其放入映射中，然后增加其值，这相当于初始化数字组合的出现次数为1。
                  */
-                combinationCount.computeIfAbsent(combinationStr,k->new AtomicInteger(0)).incrementAndGet();
+                //combinationCount.computeIfAbsent(combinationStr,k->new AtomicInteger(0)).incrementAndGet();
+                // 使用锁确保线程安全
+                    combinationCount.computeIfAbsent(combinationStr, k -> new AtomicInteger(0)).incrementAndGet();
+
             }
         }
     }
